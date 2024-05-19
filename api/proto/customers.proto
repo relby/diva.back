@@ -35,8 +35,19 @@ message ExportCustomersToExcelResponse {
     bytes data = 1;
 };
 
+message AddCustomerRequest {
+    string full_name = 1;
+    string phone_number = 2;
+    uint32 discount = 3;
+}
+
+message AddCustomerResponse {
+    Customer customer = 1;
+}
+
 service CustomersService {
     rpc GetCustomers(GetCustomersRequest) returns (GetCustomersResponse);
     rpc SetCustomerDiscountById(SetCustomerDiscountByIdRequest) returns (SetCustomerDiscountByIdResponse);
     rpc ExportCustomersToExcel(ExportCustomersToExcelRequest) returns (ExportCustomersToExcelResponse);
+    rpc AddCustomer(AddCustomerRequest) returns (AddCustomerResponse);
 };

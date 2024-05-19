@@ -25,6 +25,7 @@ type CustomersServiceClient interface {
 	GetCustomers(ctx context.Context, in *GetCustomersRequest, opts ...grpc.CallOption) (*GetCustomersResponse, error)
 	SetCustomerDiscountById(ctx context.Context, in *SetCustomerDiscountByIdRequest, opts ...grpc.CallOption) (*SetCustomerDiscountByIdResponse, error)
 	ExportCustomersToExcel(ctx context.Context, in *ExportCustomersToExcelRequest, opts ...grpc.CallOption) (*ExportCustomersToExcelResponse, error)
+	AddCustomer(ctx context.Context, in *AddCustomerRequest, opts ...grpc.CallOption) (*AddCustomerResponse, error)
 }
 
 type customersServiceClient struct {
@@ -62,6 +63,15 @@ func (c *customersServiceClient) ExportCustomersToExcel(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *customersServiceClient) AddCustomer(ctx context.Context, in *AddCustomerRequest, opts ...grpc.CallOption) (*AddCustomerResponse, error) {
+	out := new(AddCustomerResponse)
+	err := c.cc.Invoke(ctx, "/customers.CustomersService/AddCustomer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CustomersServiceServer is the server API for CustomersService service.
 // All implementations must embed UnimplementedCustomersServiceServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type CustomersServiceServer interface {
 	GetCustomers(context.Context, *GetCustomersRequest) (*GetCustomersResponse, error)
 	SetCustomerDiscountById(context.Context, *SetCustomerDiscountByIdRequest) (*SetCustomerDiscountByIdResponse, error)
 	ExportCustomersToExcel(context.Context, *ExportCustomersToExcelRequest) (*ExportCustomersToExcelResponse, error)
+	AddCustomer(context.Context, *AddCustomerRequest) (*AddCustomerResponse, error)
 	mustEmbedUnimplementedCustomersServiceServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedCustomersServiceServer) SetCustomerDiscountById(context.Conte
 }
 func (UnimplementedCustomersServiceServer) ExportCustomersToExcel(context.Context, *ExportCustomersToExcelRequest) (*ExportCustomersToExcelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExportCustomersToExcel not implemented")
+}
+func (UnimplementedCustomersServiceServer) AddCustomer(context.Context, *AddCustomerRequest) (*AddCustomerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddCustomer not implemented")
 }
 func (UnimplementedCustomersServiceServer) mustEmbedUnimplementedCustomersServiceServer() {}
 
@@ -152,6 +166,24 @@ func _CustomersService_ExportCustomersToExcel_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CustomersService_AddCustomer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddCustomerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CustomersServiceServer).AddCustomer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/customers.CustomersService/AddCustomer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CustomersServiceServer).AddCustomer(ctx, req.(*AddCustomerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CustomersService_ServiceDesc is the grpc.ServiceDesc for CustomersService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var CustomersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExportCustomersToExcel",
 			Handler:    _CustomersService_ExportCustomersToExcel_Handler,
+		},
+		{
+			MethodName: "AddCustomer",
+			Handler:    _CustomersService_AddCustomer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

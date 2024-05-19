@@ -46,3 +46,16 @@ func (service CustomerService) SetCustomerDiscountByID(ctx context.Context, id m
 
 	return customer, nil
 }
+
+func (service CustomerService) AddCustomer(ctx context.Context, fullName model.CustomerFullName, phoneNumber model.CustomerPhoneNumber, discount model.CustomerDiscount) (*model.Customer, error) {
+	customer, err := model.NewCustomer(fullName, phoneNumber, discount)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = service.customerRepository.Save(ctx, customer); err != nil {
+		return nil, err
+	}
+
+	return customer, nil
+}

@@ -49,6 +49,32 @@ func (server *GRPCServer) SetCustomerDiscountById(ctx context.Context, req *genp
 	}, nil
 }
 
+func (server *GRPCServer) AddCustomer(ctx context.Context, req *genproto.AddCustomerRequest) (*genproto.AddCustomerResponse, error) {
+	fullName, err := model.NewCustomerFullName(req.FullName)
+	if err != nil {
+		return nil, err
+	}
+
+	phoneNumber, err := model.NewCustomerPhoneNumber(req.PhoneNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	discount, err := model.NewCustomerDiscount(req.Discount)
+	if err != nil {
+		return nil, err
+	}
+
+	customer, err := server.customerService.AddCustomer(ctx, fullName, phoneNumber, discount)
+	if err != nil {
+		return nil, err
+	}
+
+	return &genproto.AddCustomerResponse{
+		Customer: convert.CustomerFromModelToProto(customer),
+	}, nil
+}
+
 func (server *GRPCServer) ExportCustomersToExcel(ctx context.Context, req *genproto.ExportCustomersToExcelRequest) (*genproto.ExportCustomersToExcelResponse, error) {
 	// TODO
 	return nil, errors.New("UNIMPLEMENTED")
