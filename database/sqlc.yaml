@@ -1,0 +1,10 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "./postgres/query.sql"
+    schema: "./postgres/migrations"
+    gen:
+      go:
+        out: "../pkg/gensqlc"
+        sql_package: "pgx/v5"
+        emit_result_struct_pointers: true
