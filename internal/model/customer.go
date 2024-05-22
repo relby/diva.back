@@ -91,6 +91,14 @@ func (customer *Customer) SetID(id CustomerID) {
 	customer.id = id
 }
 
+func (customer *Customer) SetFullName(fullName CustomerFullName) {
+	customer.fullName = fullName
+}
+
+func (customer *Customer) SetPhoneNumber(phoneNumber CustomerPhoneNumber) {
+	customer.phoneNumber = phoneNumber
+}
+
 func (customer *Customer) SetDiscount(discount CustomerDiscount) {
 	customer.discount = discount
 }

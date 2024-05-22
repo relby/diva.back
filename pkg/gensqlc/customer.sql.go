@@ -11,6 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteCustomerById = `-- name: DeleteCustomerById :exec
+DELETE FROM customers WHERE id = $1
+`
+
+func (q *Queries) DeleteCustomerById(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteCustomerById, id)
+	return err
+}
+
 const insertCustomer = `-- name: InsertCustomer :one
 INSERT INTO customers (full_name, phone_number, discount)
 VALUES ($1, $2, $3)
@@ -70,6 +79,7 @@ func (q *Queries) SelectCustomerByIdForUpdate(ctx context.Context, id int64) (*C
 const selectCustomers = `-- name: SelectCustomers :many
 SELECT id, full_name, phone_number, discount FROM customers
 WHERE (full_name ILIKE '%' || $1 || '%' OR $1 IS NULL) AND (phone_number ILIKE '%' || $2 || '%' OR $2 IS NULL)
+ORDER BY full_name ASC
 `
 
 type SelectCustomersParams struct {

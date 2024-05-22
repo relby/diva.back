@@ -1,6 +1,7 @@
 -- name: SelectCustomers :many
 SELECT * FROM customers
-WHERE (full_name ILIKE '%' || sqlc.narg(full_name) || '%' OR sqlc.narg(full_name) IS NULL) AND (phone_number ILIKE '%' || sqlc.narg(phone_number) || '%' OR sqlc.narg(phone_number) IS NULL);
+WHERE (full_name ILIKE '%' || sqlc.narg(full_name) || '%' OR sqlc.narg(full_name) IS NULL) AND (phone_number ILIKE '%' || sqlc.narg(phone_number) || '%' OR sqlc.narg(phone_number) IS NULL)
+ORDER BY full_name ASC;
 
 -- name: SelectCustomerById :one
 SELECT * FROM customers
@@ -27,3 +28,6 @@ RETURNING id;
 
 -- name: TruncateCustomers :exec
 TRUNCATE customers RESTART IDENTITY CASCADE;
+
+-- name: DeleteCustomerById :exec
+DELETE FROM customers WHERE id = $1;

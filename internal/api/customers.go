@@ -10,8 +10,8 @@ import (
 	"github.com/relby/diva.back/pkg/genproto"
 )
 
-func (server *GRPCServer) GetCustomers(ctx context.Context, req *genproto.GetCustomersRequest) (*genproto.GetCustomersResponse, error) {
-	customers, err := server.customerService.GetManyCustomers(ctx, service.CustomerServiceGetManyCustomersOptions{
+func (server *GRPCServer) ListCustomers(ctx context.Context, req *genproto.GetCustomersRequest) (*genproto.GetCustomersResponse, error) {
+	customers, err := server.customerService.ListCustomers(ctx, &service.CustomerServiceGetManyCustomersOptions{
 		FullName:    req.FullName,
 		PhoneNumber: req.PhoneNumber,
 	})
@@ -29,22 +29,49 @@ func (server *GRPCServer) GetCustomers(ctx context.Context, req *genproto.GetCus
 	}, nil
 }
 
-func (server *GRPCServer) SetCustomerDiscountById(ctx context.Context, req *genproto.SetCustomerDiscountByIdRequest) (*genproto.SetCustomerDiscountByIdResponse, error) {
-	customerID, err := model.NewCustomerID(req.Id)
-	if err != nil {
-		return nil, err
-	}
-	customerDiscount, err := model.NewCustomerDiscount(req.Discount)
+func (server *GRPCServer) UpdateCustomer(ctx context.Context, req *genproto.UpdateCustomerRequest) (*genproto.UpdateCustomerResponse, error) {
+	id, err := model.NewCustomerID(req.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	customer, err := server.customerService.SetCustomerDiscountByID(ctx, customerID, customerDiscount)
+	customer, err := server.customerService.GetCustomer(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &genproto.SetCustomerDiscountByIdResponse{
+	var values service.UpdateCustomerValues
+	if req.FullName != nil {
+		fullName, err := model.NewCustomerFullName(*req.FullName)
+		if err != nil {
+			return nil, err
+		}
+
+		values.FullName = &fullName
+	}
+	if req.PhoneNumber != nil {
+		phoneNumber, err := model.NewCustomerPhoneNumber(*req.PhoneNumber)
+		if err != nil {
+			return nil, err
+		}
+
+		values.PhoneNumber = &phoneNumber
+	}
+	if req.Discount != nil {
+		discount, err := model.NewCustomerDiscount(*req.Discount)
+		if err != nil {
+			return nil, err
+		}
+
+		values.Discount = &discount
+	}
+
+	err = server.customerService.UpdateCustomer(ctx, customer, &values)
+	if err != nil {
+		return nil, err
+	}
+
+	return &genproto.UpdateCustomerResponse{
 		Customer: convert.CustomerFromModelToProto(customer),
 	}, nil
 }
@@ -71,6 +98,26 @@ func (server *GRPCServer) AddCustomer(ctx context.Context, req *genproto.AddCust
 	}
 
 	return &genproto.AddCustomerResponse{
+		Customer: convert.CustomerFromModelToProto(customer),
+	}, nil
+}
+
+func (server *GRPCServer) DeleteCustomer(ctx context.Context, req *genproto.DeleteCustomerRequest) (*genproto.DeleteCustomerResponse, error) {
+	id, err := model.NewCustomerID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	customer, err := server.customerService.GetCustomer(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = server.customerService.DeleteCustomer(ctx, customer); err != nil {
+		return nil, err
+	}
+
+	return &genproto.DeleteCustomerResponse{
 		Customer: convert.CustomerFromModelToProto(customer),
 	}, nil
 }

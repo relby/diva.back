@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	customerRespository, err := diContainer.CustomerRepository(ctx)
+	customerRepository, err := diContainer.CustomerRepository(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -90,7 +90,7 @@ func main() {
 							panic(err)
 						}
 
-						if err := customerRespository.Save(ctx.Context, customer); err != nil {
+						if err := customerRepository.Save(ctx.Context, customer); err != nil {
 							panic(err)
 						}
 					}

@@ -22,14 +22,14 @@ func NewCustomerRepository(queries *gensqlc.Queries) *CustomerRepository {
 	}
 }
 
-func (repository *CustomerRepository) FindMany(ctx context.Context, options repository.CustomerRepositoryFindManyOptions) ([]*model.Customer, error) {
+func (repository *CustomerRepository) List(ctx context.Context, options *repository.CustomerRepositoryFindManyOptions) ([]*model.Customer, error) {
 	var fullName, phoneNumber pgtype.Text
-	if options.FullName != "" {
-		fullName.String = options.FullName
+	if options.FullName != nil {
+		fullName.String = *options.FullName
 		fullName.Valid = true
 	}
-	if options.PhoneNumber != "" {
-		phoneNumber.String = options.PhoneNumber
+	if options.PhoneNumber != nil {
+		phoneNumber.String = *options.PhoneNumber
 		phoneNumber.Valid = true
 	}
 	customersRow, err := repository.queries.SelectCustomers(ctx, gensqlc.SelectCustomersParams{
@@ -51,7 +51,7 @@ func (repository *CustomerRepository) FindMany(ctx context.Context, options repo
 	return customersModel, nil
 }
 
-func (repository *CustomerRepository) FindOneByID(ctx context.Context, id model.CustomerID) (*model.Customer, error) {
+func (repository *CustomerRepository) GetByID(ctx context.Context, id model.CustomerID) (*model.Customer, error) {
 	customerRow, err := repository.queries.SelectCustomerById(ctx, int64(id))
 	if err != nil {
 		return nil, err
@@ -93,6 +93,14 @@ func (repository *CustomerRepository) Save(ctx context.Context, customer *model.
 	}
 
 	customer.SetID(customerID)
+
+	return nil
+}
+
+func (repository *CustomerRepository) Delete(ctx context.Context, customer *model.Customer) error {
+	if err := repository.queries.DeleteCustomerById(ctx, int64(customer.ID())); err != nil {
+		return err
+	}
 
 	return nil
 }
