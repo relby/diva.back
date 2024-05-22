@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/relby/diva.back/internal/api"
@@ -69,31 +70,36 @@ func (diContainer *DIContainer) PostgresPool(ctx context.Context) (*pgxpool.Pool
 		if err != nil {
 			return nil, err
 		}
-		postgresPool, err := pgxpool.New(ctx, postgresConfig.DSN())
+		postgresPoolConfig, err := pgxpool.ParseConfig(postgresConfig.DSN())
+		if err != nil {
+			return nil, err
+		}
+
+		// NOTE: register enum and enum array types: https://github.com/jackc/pgx/issues/1549 https://github.com/jackc/pgx/issues/418
+		postgresPoolConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+			types := []string{
+				"employee_permission",
+				"_employee_permission",
+			}
+
+			for _, t := range types {
+				t, err := conn.LoadType(ctx, t)
+				if err != nil {
+					return err
+				}
+				conn.TypeMap().RegisterType(t)
+			}
+
+			return nil
+		}
+
+		postgresPool, err := pgxpool.NewWithConfig(ctx, postgresPoolConfig)
 		if err != nil {
 			return nil, err
 		}
 		if err := postgresPool.Ping(ctx); err != nil {
 			return nil, err
 		}
-
-		// NOTE: register enum and enum array types: https://github.com/jackc/pgx/issues/1549
-		conn, err := postgresPool.Acquire(ctx)
-		if err != nil {
-			return nil, err
-		}
-		defer conn.Release()
-		t, err := conn.Conn().LoadType(ctx, "employee_permission")
-		if err != nil {
-			return nil, err
-		}
-		conn.Conn().TypeMap().RegisterType(t)
-
-		t, err = conn.Conn().LoadType(ctx, "_employee_permission")
-		if err != nil {
-			return nil, err
-		}
-		conn.Conn().TypeMap().RegisterType(t)
 
 		closer.Add(func() error {
 			postgresPool.Close()
