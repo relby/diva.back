@@ -63,6 +63,7 @@ func (app *App) initGRPCServer(ctx context.Context) error {
 	}
 
 	genproto.RegisterCustomersServiceServer(app.grpcServer, grpcServer)
+	genproto.RegisterEmployeesServiceServer(app.grpcServer, grpcServer)
 
 	closer.Add(func() error {
 		app.grpcServer.GracefulStop()

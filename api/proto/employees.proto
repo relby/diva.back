@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package employees;
+
+option go_package = "github.com/relby/diva.back/pkg/genproto";
+
+message UUID {
+    string value = 1;
+}
+
+enum EmployeePermission {
+    CREATE = 0;
+    READ = 1;
+    UPDATE = 2;
+    DELETE = 3;
+}
+
+message Employee {
+    UUID id = 1;
+    string full_name = 2;
+    string access_key = 3;
+    repeated EmployeePermission permissions = 4;
+}
+
+message GetEmployeesRequest {}
+message GetEmployeesResponse {
+    repeated Employee employees = 1;
+}
+
+message AddEmployeeRequest {
+    string full_name = 1;
+    string accessKey = 2;
+    repeated EmployeePermission permissions = 3;
+}
+
+message AddEmployeeResponse {
+    Employee employee = 1;
+}
+
+message UpdateEmployeeRequest {
+    message Permissions {
+        repeated EmployeePermission permissions = 1;
+    }
+    UUID id = 1;
+    optional string full_name = 2;
+    optional string access_key = 3;
+    optional Permissions permissions = 4;
+}
+
+message UpdateEmployeeResponse {
+    Employee employee = 1;
+}
+
+message DeleteEmployeeRequest {
+    UUID id = 1;
+}
+
+message DeleteEmployeeResponse {
+    Employee employee = 1;
+}
+
+service EmployeesService {
+    rpc GetEmployees(GetEmployeesRequest) returns (GetEmployeesResponse);
+    rpc AddEmployee(AddEmployeeRequest) returns (AddEmployeeResponse);
+    rpc UpdateEmployee(UpdateEmployeeRequest) returns (UpdateEmployeeResponse);
+    rpc DeleteEmployee(DeleteEmployeeRequest) returns (DeleteEmployeeResponse);
+}

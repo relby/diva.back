@@ -63,14 +63,13 @@ func NewCustomer(fullName CustomerFullName, phoneNumber CustomerPhoneNumber, dis
 	}, nil
 }
 
-// NOTE: Use only in repository implementation to create domain model from database model
 func NewCustomerWithId(id CustomerID, fullName CustomerFullName, phoneNumber CustomerPhoneNumber, discount CustomerDiscount) (*Customer, error) {
 	customer, err := NewCustomer(fullName, phoneNumber, discount)
 	if err != nil {
 		return nil, err
 	}
 
-	customer.id = id
+	customer.SetID(id)
 
 	return customer, nil
 }

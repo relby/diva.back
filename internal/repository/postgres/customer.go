@@ -40,15 +40,15 @@ func (repository *CustomerRepository) FindMany(ctx context.Context, options repo
 		return nil, err
 	}
 
-	domainCustomers := make([]*model.Customer, len(customersRow))
+	customersModel := make([]*model.Customer, len(customersRow))
 	for i, row := range customersRow {
-		domainCustomers[i], err = convert.CustomerFromRowToModel(row)
+		customersModel[i], err = convert.CustomerFromRowToModel(row)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return domainCustomers, nil
+	return customersModel, nil
 }
 
 func (repository *CustomerRepository) FindOneByID(ctx context.Context, id model.CustomerID) (*model.Customer, error) {
@@ -57,12 +57,12 @@ func (repository *CustomerRepository) FindOneByID(ctx context.Context, id model.
 		return nil, err
 	}
 
-	customer, err := convert.CustomerFromRowToModel(customerRow)
+	customerModel, err := convert.CustomerFromRowToModel(customerRow)
 	if err != nil {
 		return nil, err
 	}
 
-	return customer, nil
+	return customerModel, nil
 }
 
 func (repository *CustomerRepository) Save(ctx context.Context, customer *model.Customer) error {

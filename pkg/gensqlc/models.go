@@ -4,9 +4,77 @@
 
 package gensqlc
 
+import (
+	"database/sql/driver"
+	"fmt"
+
+	"github.com/google/uuid"
+)
+
+type EmployeePermission string
+
+const (
+	EmployeePermissionCREATE EmployeePermission = "CREATE"
+	EmployeePermissionREAD   EmployeePermission = "READ"
+	EmployeePermissionUPDATE EmployeePermission = "UPDATE"
+	EmployeePermissionDELETE EmployeePermission = "DELETE"
+)
+
+func (e *EmployeePermission) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EmployeePermission(s)
+	case string:
+		*e = EmployeePermission(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EmployeePermission: %T", src)
+	}
+	return nil
+}
+
+type NullEmployeePermission struct {
+	EmployeePermission EmployeePermission
+	Valid              bool // Valid is true if EmployeePermission is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEmployeePermission) Scan(value interface{}) error {
+	if value == nil {
+		ns.EmployeePermission, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EmployeePermission.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEmployeePermission) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EmployeePermission), nil
+}
+
+type Admin struct {
+	UserID         uuid.UUID
+	Login          string
+	HashedPassword string
+}
+
 type Customer struct {
 	ID          int64
 	FullName    string
 	PhoneNumber string
 	Discount    int16
+}
+
+type Employee struct {
+	UserID      uuid.UUID
+	AccessKey   string
+	Permissions []EmployeePermission
+}
+
+type User struct {
+	ID       uuid.UUID
+	FullName string
 }

@@ -23,7 +23,10 @@ type DIContainer struct {
 	queries *gensqlc.Queries
 
 	customerRepository repository.CustomerRepository
+	adminRepository    repository.AdminRepository
+	employeeRepository repository.EmployeeRepository
 	customerService    *service.CustomerService
+	employeeService    *service.EmployeeService
 	grpcServer         *api.GRPCServer
 }
 
@@ -73,6 +76,25 @@ func (diContainer *DIContainer) PostgresPool(ctx context.Context) (*pgxpool.Pool
 		if err := postgresPool.Ping(ctx); err != nil {
 			return nil, err
 		}
+
+		// NOTE: register enum and enum array types: https://github.com/jackc/pgx/issues/1549
+		conn, err := postgresPool.Acquire(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer conn.Release()
+		t, err := conn.Conn().LoadType(ctx, "employee_permission")
+		if err != nil {
+			return nil, err
+		}
+		conn.Conn().TypeMap().RegisterType(t)
+
+		t, err = conn.Conn().LoadType(ctx, "_employee_permission")
+		if err != nil {
+			return nil, err
+		}
+		conn.Conn().TypeMap().RegisterType(t)
+
 		closer.Add(func() error {
 			postgresPool.Close()
 			return nil
@@ -110,6 +132,42 @@ func (diContainer *DIContainer) CustomerRepository(ctx context.Context) (reposit
 	return diContainer.customerRepository, nil
 }
 
+func (diContainer *DIContainer) AdminRepository(ctx context.Context) (repository.AdminRepository, error) {
+	if diContainer.adminRepository == nil {
+		postgresPool, err := diContainer.PostgresPool(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		queries, err := diContainer.Queries(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		diContainer.adminRepository = postgres.NewAdminRepository(postgresPool, queries)
+	}
+
+	return diContainer.adminRepository, nil
+}
+
+func (diContainer *DIContainer) EmployeeRepository(ctx context.Context) (repository.EmployeeRepository, error) {
+	if diContainer.employeeRepository == nil {
+		postgresPool, err := diContainer.PostgresPool(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		queries, err := diContainer.Queries(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		diContainer.employeeRepository = postgres.NewEmployeeRepository(postgresPool, queries)
+	}
+
+	return diContainer.employeeRepository, nil
+}
+
 func (diContainer *DIContainer) CustomerService(ctx context.Context) (*service.CustomerService, error) {
 	if diContainer.customerService == nil {
 		customerRepository, err := diContainer.CustomerRepository(ctx)
@@ -123,13 +181,31 @@ func (diContainer *DIContainer) CustomerService(ctx context.Context) (*service.C
 	return diContainer.customerService, nil
 }
 
+func (diContainer *DIContainer) EmployeeService(ctx context.Context) (*service.EmployeeService, error) {
+	if diContainer.employeeService == nil {
+		employeeRepository, err := diContainer.EmployeeRepository(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		diContainer.employeeService = service.NewEmployeeService(employeeRepository)
+	}
+
+	return diContainer.employeeService, nil
+}
+
 func (diContainer *DIContainer) GRPCServer(ctx context.Context) (*api.GRPCServer, error) {
 	if diContainer.grpcServer == nil {
 		customerService, err := diContainer.CustomerService(ctx)
 		if err != nil {
 			return nil, err
 		}
-		diContainer.grpcServer = api.NewGRPCServer(customerService)
+		employeeService, err := diContainer.EmployeeService(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		diContainer.grpcServer = api.NewGRPCServer(customerService, employeeService)
 	}
 
 	return diContainer.grpcServer, nil
