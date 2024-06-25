@@ -37,7 +37,12 @@ func (server *GRPCServer) AddEmployee(ctx context.Context, req *genproto.AddEmpl
 		return nil, err
 	}
 
-	employee, err := server.employeeService.AddEmployee(ctx, fullName, accessKey, nil)
+	permissions, err := convert.EmployeePermissionsFromProtoToModel(req.Permissions)
+	if err != nil {
+		return nil, err
+	}
+
+	employee, err := server.employeeService.AddEmployee(ctx, fullName, accessKey, permissions)
 	if err != nil {
 		return nil, err
 	}
