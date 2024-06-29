@@ -33,7 +33,7 @@ func main() {
 		panic(err)
 	}
 
-	adminHashedPassword, err := model.NewAdminHashedPassword(*password)
+	adminHashedPassword, err := model.NewAdminHashedPasswordFromPassword(*password)
 	if err != nil {
 		panic(err)
 	}

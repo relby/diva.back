@@ -7,12 +7,7 @@ import (
 )
 
 func EmployeeFromRowToModel(userRow gensqlc.User, employeeRow gensqlc.Employee) (*model.Employee, error) {
-	id, err := model.NewUserID(userRow.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	fullName, err := model.NewUserFullName(userRow.FullName)
+	id, fullName, err := userFromRowToValueObjects(userRow)
 	if err != nil {
 		return nil, err
 	}
@@ -22,12 +17,15 @@ func EmployeeFromRowToModel(userRow gensqlc.User, employeeRow gensqlc.Employee) 
 		return nil, err
 	}
 
-	permissionsString := make([]string, len(employeeRow.Permissions))
+	permissionSlice := make([]model.EmployeePermission, len(employeeRow.Permissions))
 	for i, permission := range employeeRow.Permissions {
-		permissionsString[i] = string(permission)
+		permissionSlice[i], err = model.NewEmployeePermission(permission)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	permissions, err := model.NewEmployeePermissions(permissionsString)
+	permissions, err := model.NewEmployeePermissions(permissionSlice)
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +54,17 @@ func EmployeePermissionsFromModelToProto(permissionsModel model.EmployeePermissi
 }
 
 func EmployeePermissionsFromProtoToModel(permissionsProto []genproto.EmployeePermission) (model.EmployeePermissions, error) {
-	permissionsString := make([]string, len(permissionsProto))
+	var err error
+	permissionsSlice := make([]model.EmployeePermission, len(permissionsProto))
 
 	for i, permissionProto := range permissionsProto {
-		permissionsString[i] = genproto.EmployeePermission_name[int32(permissionProto)]
+		permissionsSlice[i], err = model.NewEmployeePermission(genproto.EmployeePermission_name[int32(permissionProto)])
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	permissionsModel, err := model.NewEmployeePermissions(permissionsString)
+	permissionsModel, err := model.NewEmployeePermissions(permissionsSlice)
 	if err != nil {
 		return nil, err
 	}

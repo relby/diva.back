@@ -11,6 +11,31 @@ import (
 	"github.com/google/uuid"
 )
 
+const selectEmployeeByAccessKey = `-- name: SelectEmployeeByAccessKey :one
+SELECT users.id, users.full_name, employees.user_id, employees.access_key, employees.permissions FROM employees
+INNER JOIN users ON employees.user_id = users.id
+WHERE employees.access_key = $1
+LIMIT 1
+`
+
+type SelectEmployeeByAccessKeyRow struct {
+	User     User
+	Employee Employee
+}
+
+func (q *Queries) SelectEmployeeByAccessKey(ctx context.Context, accessKey string) (*SelectEmployeeByAccessKeyRow, error) {
+	row := q.db.QueryRow(ctx, selectEmployeeByAccessKey, accessKey)
+	var i SelectEmployeeByAccessKeyRow
+	err := row.Scan(
+		&i.User.ID,
+		&i.User.FullName,
+		&i.Employee.UserID,
+		&i.Employee.AccessKey,
+		&i.Employee.Permissions,
+	)
+	return &i, err
+}
+
 const selectEmployeeByID = `-- name: SelectEmployeeByID :one
 SELECT users.id, users.full_name, employees.user_id, employees.access_key, employees.permissions FROM employees
 INNER JOIN users ON employees.user_id = users.id

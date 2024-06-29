@@ -17,6 +17,7 @@ import (
 )
 
 type DIContainer struct {
+	authConfig     config.AuthConfig
 	postgresConfig config.PostgresConfig
 	grpcConfig     config.GRPCConfig
 	postgresPool   *pgxpool.Pool
@@ -28,6 +29,7 @@ type DIContainer struct {
 	employeeRepository repository.EmployeeRepository
 	customerService    *service.CustomerService
 	employeeService    *service.EmployeeService
+	authService        *service.AuthService
 	grpcServer         *api.GRPCServer
 }
 
@@ -37,6 +39,18 @@ func NewDIContainer() (*DIContainer, error) {
 	}
 
 	return &DIContainer{}, nil
+}
+
+func (diContainer *DIContainer) AuthConfig() (config.AuthConfig, error) {
+	if diContainer.authConfig == nil {
+		cfg, err := env.NewAuthConfig()
+		if err != nil {
+			return nil, err
+		}
+		diContainer.authConfig = cfg
+	}
+
+	return diContainer.authConfig, nil
 }
 
 func (diContainer *DIContainer) GRPCConfig() (config.GRPCConfig, error) {
@@ -200,18 +214,45 @@ func (diContainer *DIContainer) EmployeeService(ctx context.Context) (*service.E
 	return diContainer.employeeService, nil
 }
 
+func (diContainer *DIContainer) AuthService(ctx context.Context) (*service.AuthService, error) {
+	if diContainer.authService == nil {
+		authConfig, err := diContainer.AuthConfig()
+		if err != nil {
+			return nil, err
+		}
+		employeeRepository, err := diContainer.EmployeeRepository(ctx)
+		if err != nil {
+			return nil, err
+		}
+		adminRepository, err := diContainer.AdminRepository(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		diContainer.authService = service.NewAuthService(authConfig, employeeRepository, adminRepository)
+	}
+
+	return diContainer.authService, nil
+}
+
 func (diContainer *DIContainer) GRPCServer(ctx context.Context) (*api.GRPCServer, error) {
 	if diContainer.grpcServer == nil {
 		customerService, err := diContainer.CustomerService(ctx)
 		if err != nil {
 			return nil, err
 		}
+
 		employeeService, err := diContainer.EmployeeService(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		diContainer.grpcServer = api.NewGRPCServer(customerService, employeeService)
+		authService, err := diContainer.AuthService(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		diContainer.grpcServer = api.NewGRPCServer(customerService, employeeService, authService)
 	}
 
 	return diContainer.grpcServer, nil

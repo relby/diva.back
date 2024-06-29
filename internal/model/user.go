@@ -6,6 +6,24 @@ import (
 	"github.com/google/uuid"
 )
 
+type UserType string
+
+const (
+	UserTypeAdmin    UserType = "admin"
+	UserTypeEmployee UserType = "employee"
+)
+
+func NewUserType(userType string) (UserType, error) {
+	switch userType {
+	case string(UserTypeAdmin):
+		return UserTypeAdmin, nil
+	case string(UserTypeEmployee):
+		return UserTypeEmployee, nil
+	default:
+		return "", nil
+	}
+}
+
 type UserID uuid.UUID
 
 func NewUserID(id uuid.UUID) (UserID, error) {
@@ -14,6 +32,15 @@ func NewUserID(id uuid.UUID) (UserID, error) {
 	}
 
 	return UserID(id), nil
+}
+
+func NewUserIDFromString(id string) (UserID, error) {
+	idUuid, err := uuid.Parse(id)
+	if err != nil {
+		return UserID(uuid.Nil), err
+	}
+
+	return NewUserID(idUuid)
 }
 
 func (id UserID) String() string {

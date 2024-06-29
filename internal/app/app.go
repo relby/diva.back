@@ -4,7 +4,9 @@ import (
 	"context"
 	"net"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/relby/diva.back/internal/closer"
+	"github.com/relby/diva.back/internal/interceptor"
 	"github.com/relby/diva.back/pkg/genproto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -53,7 +55,22 @@ func (app *App) initDIContainer(ctx context.Context) error {
 }
 
 func (app *App) initGRPCServer(ctx context.Context) error {
-	app.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+	authConfig, err := app.diContainer.AuthConfig()
+	if err != nil {
+		return err
+	}
+	authService, err := app.diContainer.AuthService(ctx)
+	if err != nil {
+		return err
+	}
+
+	app.grpcServer = grpc.NewServer(
+		grpc.Creds(insecure.NewCredentials()),
+		grpc.ChainUnaryInterceptor(
+			interceptor.NewAuthInterceptor(authConfig, authService).Unary,
+			recovery.UnaryServerInterceptor(),
+		),
+	)
 
 	reflection.Register(app.grpcServer)
 
@@ -64,6 +81,7 @@ func (app *App) initGRPCServer(ctx context.Context) error {
 
 	genproto.RegisterCustomersServiceServer(app.grpcServer, grpcServer)
 	genproto.RegisterEmployeesServiceServer(app.grpcServer, grpcServer)
+	genproto.RegisterAuthServiceServer(app.grpcServer, grpcServer)
 
 	closer.Add(func() error {
 		app.grpcServer.GracefulStop()

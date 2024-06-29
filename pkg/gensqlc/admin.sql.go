@@ -11,6 +11,56 @@ import (
 	"github.com/google/uuid"
 )
 
+const selectAdminById = `-- name: SelectAdminById :one
+SELECT users.id, users.full_name, admins.user_id, admins.login, admins.hashed_password FROM admins
+INNER JOIN users ON admins.user_id = users.id
+WHERE users.id = $1
+LIMIT 1
+`
+
+type SelectAdminByIdRow struct {
+	User  User
+	Admin Admin
+}
+
+func (q *Queries) SelectAdminById(ctx context.Context, id uuid.UUID) (*SelectAdminByIdRow, error) {
+	row := q.db.QueryRow(ctx, selectAdminById, id)
+	var i SelectAdminByIdRow
+	err := row.Scan(
+		&i.User.ID,
+		&i.User.FullName,
+		&i.Admin.UserID,
+		&i.Admin.Login,
+		&i.Admin.HashedPassword,
+	)
+	return &i, err
+}
+
+const selectAdminByLogin = `-- name: SelectAdminByLogin :one
+SELECT users.id, users.full_name, admins.user_id, admins.login, admins.hashed_password FROM admins
+INNER JOIN users ON admins.user_id = users.id
+WHERE admins.login = $1
+LIMIT 1
+`
+
+type SelectAdminByLoginRow struct {
+	User  User
+	Admin Admin
+}
+
+func (q *Queries) SelectAdminByLogin(ctx context.Context, login string) (*SelectAdminByLoginRow, error) {
+	row := q.db.QueryRow(ctx, selectAdminByLogin, login)
+	var i SelectAdminByLoginRow
+	err := row.Scan(
+		&i.User.ID,
+		&i.User.FullName,
+		&i.Admin.UserID,
+		&i.Admin.Login,
+		&i.Admin.HashedPassword,
+	)
+	return &i, err
+}
+
 const upsertAdmin = `-- name: UpsertAdmin :exec
 INSERT INTO admins (user_id, login, hashed_password)
 VALUES ($1, $2, $3)

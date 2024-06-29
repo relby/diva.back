@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "github.com/relby/diva.back/pkg/genproto";
+
+message AdminLoginRequest {
+    string login = 1;
+    string password = 2;
+}
+
+message AdminLoginResponse {
+    string access_token = 1;
+}
+
+message EmployeeLoginRequest {
+    string access_key = 1;
+}
+
+message EmployeeLoginResponse {
+    string access_token = 1;
+}
+
+service AuthService {
+    rpc AdminLogin(AdminLoginRequest) returns (AdminLoginResponse);
+    rpc EmployeeLogin(EmployeeLoginRequest) returns (EmployeeLoginResponse);
+}

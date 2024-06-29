@@ -1,14 +1,13 @@
 package env
 
 import (
-	"errors"
 	"os"
 
 	"github.com/relby/diva.back/internal/config"
 )
 
 const (
-	dsnEnvName = "PG_DSN"
+	pgDsnName = "PG_DSN"
 )
 
 var _ config.PostgresConfig = (*postgresConfig)(nil)
@@ -18,9 +17,9 @@ type postgresConfig struct {
 }
 
 func NewPostgresConfig() (*postgresConfig, error) {
-	dsn := os.Getenv(dsnEnvName)
-	if len(dsn) == 0 {
-		return nil, errors.New("postgres dsn not found")
+	dsn := os.Getenv(pgDsnName)
+	if dsn == "" {
+		return nil, notFoundError(pgDsnName)
 	}
 	return &postgresConfig{
 		dsn: dsn,

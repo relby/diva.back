@@ -39,6 +39,20 @@ func (repository *EmployeeRepository) GetByID(ctx context.Context, id model.User
 	return employeeModel, nil
 }
 
+func (repository *EmployeeRepository) GetByAccessKey(ctx context.Context, accessKey model.EmployeeAccessKey) (*model.Employee, error) {
+	employeeRow, err := repository.queries.SelectEmployeeByAccessKey(ctx, string(accessKey))
+	if err != nil {
+		return nil, err
+	}
+
+	employeeModel, err := convert.EmployeeFromRowToModel(employeeRow.User, employeeRow.Employee)
+	if err != nil {
+		return nil, err
+	}
+
+	return employeeModel, nil
+}
+
 func (repository *EmployeeRepository) List(ctx context.Context) ([]*model.Employee, error) {
 	employeesRow, err := repository.queries.SelectEmployees(ctx)
 	if err != nil {

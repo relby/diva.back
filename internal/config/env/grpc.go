@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-const grpcHostEnvName = "GRPC_HOST"
-const grpcPortEnvName = "GRPC_PORT"
+const grpcHostName = "GRPC_HOST"
+const grpcPortName = "GRPC_PORT"
 
 type GRPCConfig struct {
 	host string
@@ -14,13 +14,13 @@ type GRPCConfig struct {
 }
 
 func NewGRPCConfig() (*GRPCConfig, error) {
-	host := os.Getenv(grpcHostEnvName)
-	if len(host) == 0 {
+	host := os.Getenv(grpcHostName)
+	if host == "" {
 		host = "127.0.0.1"
 	}
 
-	port := os.Getenv(grpcPortEnvName)
-	if len(port) == 0 {
+	port := os.Getenv(grpcPortName)
+	if port == "" {
 		port = "50051"
 	}
 

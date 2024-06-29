@@ -26,6 +26,15 @@ func (service *EmployeeService) GetEmployeeByID(ctx context.Context, id model.Us
 	return employee, nil
 }
 
+func (service *EmployeeService) GetEmployeeByAccessKey(ctx context.Context, accessKey model.EmployeeAccessKey) (*model.Employee, error) {
+	employee, err := service.employeeRepository.GetByAccessKey(ctx, accessKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return employee, nil
+}
+
 func (service *EmployeeService) ListEmployees(ctx context.Context) ([]*model.Employee, error) {
 	employees, err := service.employeeRepository.List(ctx)
 	if err != nil {

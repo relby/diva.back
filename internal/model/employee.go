@@ -16,25 +16,25 @@ func NewEmployeeAccessKey(accessKey string) (EmployeeAccessKey, error) {
 	return EmployeeAccessKey(accessKey), nil
 }
 
-type employeePermission string
+type EmployeePermission string
 
 const (
-	employeePermissionCreate employeePermission = "CREATE"
-	employeePermissionRead   employeePermission = "READ"
-	employeePermissionUpdate employeePermission = "UPDATE"
-	employeePermissionDelete employeePermission = "DELETE"
+	EmployeePermissionCreate EmployeePermission = "CREATE"
+	EmployeePermissionRead   EmployeePermission = "READ"
+	EmployeePermissionUpdate EmployeePermission = "UPDATE"
+	EmployeePermissionDelete EmployeePermission = "DELETE"
 )
 
-func newEmployeePermission(permission string) (employeePermission, error) {
-	permissions := []employeePermission{
-		employeePermissionCreate,
-		employeePermissionRead,
-		employeePermissionUpdate,
-		employeePermissionDelete,
+func NewEmployeePermission[T ~string](permission T) (EmployeePermission, error) {
+	permissions := []EmployeePermission{
+		EmployeePermissionCreate,
+		EmployeePermissionRead,
+		EmployeePermissionUpdate,
+		EmployeePermissionDelete,
 	}
 
 	for _, p := range permissions {
-		if string(p) == permission {
+		if string(p) == string(permission) {
 			return p, nil
 		}
 	}
@@ -42,29 +42,29 @@ func newEmployeePermission(permission string) (employeePermission, error) {
 	return "", errors.New("employee permission invalid")
 }
 
-type EmployeePermissions []employeePermission
+type EmployeePermissions []EmployeePermission
 
-func NewEmployeePermissions(p []string) (EmployeePermissions, error) {
-	var err error
+var errEmployeePermissionsHaveDuplicates = errors.New("employee permissions can't have duplicates")
 
-	permissions := make([]employeePermission, len(p))
-	for i, permission := range p {
-		permissions[i], err = newEmployeePermission(permission)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	permissionSet := make(map[employeePermission]struct{}, len(permissions))
+func NewEmployeePermissions(permissions []EmployeePermission) (EmployeePermissions, error) {
+	permissionsSet := make(map[EmployeePermission]struct{}, len(permissions))
 
 	for _, permission := range permissions {
-		if _, found := permissionSet[permission]; found {
-			return nil, errors.New("employee permissions can't have duplicates")
+		if _, found := permissionsSet[permission]; found {
+			return nil, errEmployeePermissionsHaveDuplicates
 		}
-		permissionSet[permission] = struct{}{}
+		permissionsSet[permission] = struct{}{}
 	}
 
 	return EmployeePermissions(permissions), nil
+}
+func NewEmployeePermissionsPanic(permissions []EmployeePermission) EmployeePermissions {
+	permissions, err := NewEmployeePermissions(permissions)
+	if err != nil {
+		panic(errEmployeePermissionsHaveDuplicates)
+	}
+
+	return permissions
 }
 
 type Employee struct {
@@ -115,4 +115,16 @@ func (employee *Employee) SetAccessKey(accessKey EmployeeAccessKey) {
 
 func (employee *Employee) SetPermissions(permisssions EmployeePermissions) {
 	employee.permissions = permisssions
+}
+
+func (employee *Employee) HasPermissions(permissions EmployeePermissions) bool {
+	for _, permission := range permissions {
+		for _, employeePermission := range employee.permissions {
+			if permission != employeePermission {
+				return false
+			}
+		}
+	}
+
+	return true
 }

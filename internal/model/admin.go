@@ -15,7 +15,15 @@ func NewAdminLogin(login string) (AdminLogin, error) {
 
 type AdminHashedPassword string
 
-func NewAdminHashedPassword(password string) (AdminHashedPassword, error) {
+func NewAdminHashedPassword(hashedPassword string) (AdminHashedPassword, error) {
+	if hashedPassword == "" {
+		return "", errors.New("admin password is empty")
+	}
+
+	return AdminHashedPassword(hashedPassword), nil
+}
+
+func NewAdminHashedPasswordFromPassword(password string) (AdminHashedPassword, error) {
 	if password == "" {
 		return "", errors.New("admin password is empty")
 	}
@@ -25,7 +33,7 @@ func NewAdminHashedPassword(password string) (AdminHashedPassword, error) {
 		return "", err
 	}
 
-	return AdminHashedPassword(hashedPassword), nil
+	return NewAdminHashedPassword(string(hashedPassword))
 }
 
 type Admin struct {
@@ -69,4 +77,10 @@ func (admin *Admin) Login() AdminLogin {
 
 func (admin *Admin) HashedPassword() AdminHashedPassword {
 	return admin.hashedPassword
+}
+
+func (admin *Admin) PasswordMathes(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(string(admin.hashedPassword)), []byte(password))
+
+	return err == nil
 }

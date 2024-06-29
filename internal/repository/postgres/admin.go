@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/relby/diva.back/internal/convert"
 	"github.com/relby/diva.back/internal/model"
 	"github.com/relby/diva.back/internal/repository"
 	"github.com/relby/diva.back/pkg/gensqlc"
@@ -22,6 +23,34 @@ func NewAdminRepository(postgresPool *pgxpool.Pool, queries *gensqlc.Queries) *A
 		postgresPool: postgresPool,
 		queries:      queries,
 	}
+}
+
+func (repository *AdminRepository) GetByID(ctx context.Context, id model.UserID) (*model.Admin, error) {
+	adminRow, err := repository.queries.SelectAdminById(ctx, uuid.UUID(id))
+	if err != nil {
+		return nil, err
+	}
+
+	adminModel, err := convert.AdminFromRowToModel(adminRow.User, adminRow.Admin)
+	if err != nil {
+		return nil, err
+	}
+
+	return adminModel, nil
+}
+
+func (repository *AdminRepository) GetByLogin(ctx context.Context, login model.AdminLogin) (*model.Admin, error) {
+	adminRow, err := repository.queries.SelectAdminByLogin(ctx, string(login))
+	if err != nil {
+		return nil, err
+	}
+
+	adminModel, err := convert.AdminFromRowToModel(adminRow.User, adminRow.Admin)
+	if err != nil {
+		return nil, err
+	}
+
+	return adminModel, nil
 }
 
 func (repository *AdminRepository) Save(ctx context.Context, admin *model.Admin) error {
