@@ -68,6 +68,7 @@ func (app *App) initGRPCServer(ctx context.Context) error {
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
 			interceptor.NewAuthInterceptor(authConfig, authService).Unary,
+			interceptor.NewErrorInterceptor().Unary,
 			recovery.UnaryServerInterceptor(),
 		),
 	)

@@ -8,6 +8,8 @@ import (
 	"github.com/relby/diva.back/internal/model"
 	"github.com/relby/diva.back/internal/service"
 	"github.com/relby/diva.back/pkg/genproto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (server *GRPCServer) GetEmployees(ctx context.Context, req *genproto.GetEmployeesRequest) (*genproto.GetEmployeesResponse, error) {
@@ -112,7 +114,7 @@ func (server *GRPCServer) UpdateEmployee(ctx context.Context, req *genproto.Upda
 func (server *GRPCServer) DeleteEmployee(ctx context.Context, req *genproto.DeleteEmployeeRequest) (*genproto.DeleteEmployeeResponse, error) {
 	id, err := uuid.Parse(req.Id.Value)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid `id`: %v", err)
 	}
 
 	employeeId, err := model.NewUserID(id)

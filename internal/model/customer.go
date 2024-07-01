@@ -1,8 +1,7 @@
 package model
 
 import (
-	"errors"
-
+	"github.com/relby/diva.back/internal/domainerrors"
 	"golang.org/x/exp/constraints"
 )
 
@@ -10,7 +9,7 @@ type CustomerID uint64
 
 func NewCustomerID[T constraints.Integer](value T) (CustomerID, error) {
 	if value < 1 {
-		return 0, errors.New("customer invalid id")
+		return 0, domainerrors.NewValidationError("customer id must be >= 1")
 	}
 
 	return CustomerID(value), nil
@@ -20,20 +19,15 @@ type CustomerFullName string
 
 func NewCustomerFullName(value string) (CustomerFullName, error) {
 	if value == "" {
-		return "", errors.New("customer invalid full name")
+		return "", domainerrors.NewValidationError("customer full name is empty")
 	}
 	return CustomerFullName(value), nil
 }
 
 type CustomerPhoneNumber string
 
-// var phoneNumberRegex = regexp.MustCompile(`^\(\d{3}\) \d{3}-\d{4}$`)
-
 func NewCustomerPhoneNumber(value string) (CustomerPhoneNumber, error) {
-	// if !phoneNumberRegex.MatchString(value) {
-	// 	return "", errors.New("TODO")
-	// }
-
+	// TODO: maybe introduce validation for customer phone number
 	return CustomerPhoneNumber(value), nil
 }
 
@@ -41,7 +35,7 @@ type CustomerDiscount uint8
 
 func NewCustomerDiscount[T constraints.Integer](value T) (CustomerDiscount, error) {
 	if value < 0 || value > 100 {
-		return 0, errors.New("TODO")
+		return 0, domainerrors.NewValidationError("customer discount must in range 0-100")
 	}
 
 	return CustomerDiscount(value), nil

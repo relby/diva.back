@@ -1,16 +1,19 @@
 package model
 
 import (
-	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/google/uuid"
+	"github.com/relby/diva.back/internal/domainerrors"
 )
 
 type EmployeeAccessKey string
 
 func NewEmployeeAccessKey(accessKey string) (EmployeeAccessKey, error) {
-	if accessKey == "" {
-		return "", errors.New("employee access key is empty")
+	accessKeyRegexp := regexp.MustCompile(`^[0-9]{6}$`)
+	if !accessKeyRegexp.MatchString(accessKey) {
+		return "", domainerrors.NewValidationError(fmt.Sprintf("employee access key must match regexp: `%s`", accessKeyRegexp.String()))
 	}
 
 	return EmployeeAccessKey(accessKey), nil
@@ -37,12 +40,12 @@ func NewEmployeePermission[T ~string](permission T) (EmployeePermission, error) 
 		}
 	}
 
-	return "", errors.New("employee permission invalid")
+	return "", domainerrors.NewValidationError(fmt.Sprintf("employee permission must be one of: %v", permissions))
 }
 
 type EmployeePermissions []EmployeePermission
 
-var errEmployeePermissionsHaveDuplicates = errors.New("employee permissions can't have duplicates")
+var errEmployeePermissionsHaveDuplicates = domainerrors.NewValidationError("employee permissions can't have duplicates")
 
 func NewEmployeePermissions(permissions []EmployeePermission) (EmployeePermissions, error) {
 	permissionsSet := make(map[EmployeePermission]struct{}, len(permissions))

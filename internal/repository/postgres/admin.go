@@ -2,10 +2,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/relby/diva.back/internal/convert"
+	"github.com/relby/diva.back/internal/domainerrors"
 	"github.com/relby/diva.back/internal/model"
 	"github.com/relby/diva.back/internal/repository"
 	"github.com/relby/diva.back/pkg/gensqlc"
@@ -28,6 +31,9 @@ func NewAdminRepository(postgresPool *pgxpool.Pool, queries *gensqlc.Queries) *A
 func (repository *AdminRepository) GetByID(ctx context.Context, id model.UserID) (*model.Admin, error) {
 	adminRow, err := repository.queries.SelectAdminById(ctx, uuid.UUID(id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainerrors.NewNotFoundError("admin not found")
+		}
 		return nil, err
 	}
 
@@ -42,6 +48,9 @@ func (repository *AdminRepository) GetByID(ctx context.Context, id model.UserID)
 func (repository *AdminRepository) GetByLogin(ctx context.Context, login model.AdminLogin) (*model.Admin, error) {
 	adminRow, err := repository.queries.SelectAdminByLogin(ctx, string(login))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainerrors.NewNotFoundError("admin not found")
+		}
 		return nil, err
 	}
 

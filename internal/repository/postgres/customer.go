@@ -2,9 +2,12 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/relby/diva.back/internal/convert"
+	"github.com/relby/diva.back/internal/domainerrors"
 	"github.com/relby/diva.back/internal/model"
 	"github.com/relby/diva.back/internal/repository"
 	"github.com/relby/diva.back/pkg/gensqlc"
@@ -54,6 +57,9 @@ func (repository *CustomerRepository) List(ctx context.Context, options *reposit
 func (repository *CustomerRepository) GetByID(ctx context.Context, id model.CustomerID) (*model.Customer, error) {
 	customerRow, err := repository.queries.SelectCustomerById(ctx, int64(id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainerrors.NewNotFoundError("customer not found")
+		}
 		return nil, err
 	}
 

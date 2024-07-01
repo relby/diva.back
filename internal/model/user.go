@@ -1,9 +1,8 @@
 package model
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
+	"github.com/relby/diva.back/internal/domainerrors"
 )
 
 type UserType string
@@ -28,7 +27,7 @@ type UserID uuid.UUID
 
 func NewUserID(id uuid.UUID) (UserID, error) {
 	if id == uuid.Nil {
-		return UserID(uuid.Nil), errors.New("user id can't be nil")
+		return UserID(uuid.Nil), domainerrors.NewValidationError("user id can't be nil")
 	}
 
 	return UserID(id), nil

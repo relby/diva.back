@@ -2,10 +2,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/relby/diva.back/internal/convert"
+	"github.com/relby/diva.back/internal/domainerrors"
 	"github.com/relby/diva.back/internal/model"
 	"github.com/relby/diva.back/internal/repository"
 	"github.com/relby/diva.back/pkg/gensqlc"
@@ -28,6 +31,9 @@ func NewEmployeeRepository(postgresPool *pgxpool.Pool, queries *gensqlc.Queries)
 func (repository *EmployeeRepository) GetByID(ctx context.Context, id model.UserID) (*model.Employee, error) {
 	employeeRow, err := repository.queries.SelectEmployeeByID(ctx, uuid.UUID(id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainerrors.NewNotFoundError("employee not found")
+		}
 		return nil, err
 	}
 
@@ -42,6 +48,9 @@ func (repository *EmployeeRepository) GetByID(ctx context.Context, id model.User
 func (repository *EmployeeRepository) GetByAccessKey(ctx context.Context, accessKey model.EmployeeAccessKey) (*model.Employee, error) {
 	employeeRow, err := repository.queries.SelectEmployeeByAccessKey(ctx, string(accessKey))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainerrors.NewNotFoundError("employee not found")
+		}
 		return nil, err
 	}
 

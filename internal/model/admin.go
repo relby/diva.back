@@ -1,15 +1,22 @@
 package model
 
 import (
-	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/google/uuid"
+	"github.com/relby/diva.back/internal/domainerrors"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AdminLogin string
 
 func NewAdminLogin(login string) (AdminLogin, error) {
+	loginRegexp := regexp.MustCompile(`^[a-zA-Z0-9_]{3,}$`)
+	if !loginRegexp.MatchString(login) {
+		return "", domainerrors.NewValidationError(fmt.Sprintf("admin login must match regexp: `%s`", loginRegexp.String()))
+	}
+
 	return AdminLogin(login), nil
 }
 
@@ -17,7 +24,7 @@ type AdminHashedPassword string
 
 func NewAdminHashedPassword(hashedPassword string) (AdminHashedPassword, error) {
 	if hashedPassword == "" {
-		return "", errors.New("admin password is empty")
+		return "", domainerrors.NewValidationError("admin password is empty")
 	}
 
 	return AdminHashedPassword(hashedPassword), nil
@@ -25,12 +32,12 @@ func NewAdminHashedPassword(hashedPassword string) (AdminHashedPassword, error) 
 
 func NewAdminHashedPasswordFromPassword(password string) (AdminHashedPassword, error) {
 	if password == "" {
-		return "", errors.New("admin password is empty")
+		return "", domainerrors.NewValidationError("admin password is empty")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", err
+		return "", domainerrors.NewValidationError(fmt.Sprintf("failed to encrypt the password: %v", err))
 	}
 
 	return NewAdminHashedPassword(string(hashedPassword))
