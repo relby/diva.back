@@ -117,10 +117,15 @@ func (employee *Employee) SetPermissions(permisssions EmployeePermissions) {
 
 func (employee *Employee) HasPermissions(permissions EmployeePermissions) bool {
 	for _, permission := range permissions {
+		found := false
 		for _, employeePermission := range employee.permissions {
-			if permission != employeePermission {
-				return false
+			if permission == employeePermission {
+				found = true
+				break
 			}
+		}
+		if !found {
+			return false
 		}
 	}
 
