@@ -20,7 +20,7 @@ CREATE TABLE admins (
     PRIMARY KEY (user_id)
 );
 
-CREATE TYPE employee_permission AS ENUM('CREATE', 'READ', 'UPDATE', 'DELETE');
+CREATE TYPE employee_permission AS ENUM('CREATE', 'UPDATE', 'DELETE');
 
 CREATE TABLE employees (
     user_id uuid NOT NULL,

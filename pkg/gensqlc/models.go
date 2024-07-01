@@ -15,7 +15,6 @@ type EmployeePermission string
 
 const (
 	EmployeePermissionCREATE EmployeePermission = "CREATE"
-	EmployeePermissionREAD   EmployeePermission = "READ"
 	EmployeePermissionUPDATE EmployeePermission = "UPDATE"
 	EmployeePermissionDELETE EmployeePermission = "DELETE"
 )

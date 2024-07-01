@@ -76,11 +76,6 @@ type MethodPermission struct {
 func getMethodPermissions(fullMethod string) (*MethodPermission, bool) {
 	methodPermissions := map[string]MethodPermission{}
 
-	methodPermissions["/customers.CustomersService/ListCustomers"] = MethodPermission{
-		employeePermissions: []model.EmployeePermission{
-			model.EmployeePermissionRead,
-		},
-	}
 	methodPermissions["/customers.CustomersService/UpdateCustomer"] = MethodPermission{
 		employeePermissions: []model.EmployeePermission{
 			model.EmployeePermissionUpdate,

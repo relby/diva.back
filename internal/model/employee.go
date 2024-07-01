@@ -20,7 +20,6 @@ type EmployeePermission string
 
 const (
 	EmployeePermissionCreate EmployeePermission = "CREATE"
-	EmployeePermissionRead   EmployeePermission = "READ"
 	EmployeePermissionUpdate EmployeePermission = "UPDATE"
 	EmployeePermissionDelete EmployeePermission = "DELETE"
 )
@@ -28,7 +27,6 @@ const (
 func NewEmployeePermission[T ~string](permission T) (EmployeePermission, error) {
 	permissions := []EmployeePermission{
 		EmployeePermissionCreate,
-		EmployeePermissionRead,
 		EmployeePermissionUpdate,
 		EmployeePermissionDelete,
 	}
