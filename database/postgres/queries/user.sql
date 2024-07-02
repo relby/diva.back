@@ -4,5 +4,5 @@ VALUES ($1, $2)
 ON CONFLICT (id)
 DO UPDATE SET full_name = $2;
 
--- name: DeleteUser :exec
+-- name: DeleteUserById :exec
 DELETE FROM users WHERE id = $1;

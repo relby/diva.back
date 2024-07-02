@@ -1,2 +1,2 @@
 - [ ] Rename all plural names in files, services, repositories to singular
-- [ ] Handle all errors properly
+- [ ] Create a script that cleans up `user_refresh_tokens` table

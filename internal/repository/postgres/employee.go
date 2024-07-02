@@ -116,7 +116,7 @@ func (repository *EmployeeRepository) Save(ctx context.Context, employee *model.
 }
 
 func (repository *EmployeeRepository) Delete(ctx context.Context, employee *model.Employee) error {
-	if err := repository.queries.DeleteUser(ctx, uuid.UUID(employee.ID())); err != nil {
+	if err := repository.queries.DeleteUserById(ctx, uuid.UUID(employee.ID())); err != nil {
 		return err
 	}
 

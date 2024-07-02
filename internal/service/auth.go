@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/relby/diva.back/internal/config"
 	"github.com/relby/diva.back/internal/model"
 	"github.com/relby/diva.back/internal/repository"
@@ -37,58 +39,172 @@ func (service *AuthService) CheckAccess(ctx context.Context, userID model.UserID
 }
 
 type AuthService struct {
-	authConfig         config.AuthConfig
-	employeeRepository repository.EmployeeRepository
-	adminRepository    repository.AdminRepository
+	authConfig             config.AuthConfig
+	employeeRepository     repository.EmployeeRepository
+	adminRepository        repository.AdminRepository
+	refreshTokenRepository repository.RefreshTokenRepository
 }
 
 func NewAuthService(
 	authConfig config.AuthConfig,
 	employeeRepository repository.EmployeeRepository,
 	adminRepository repository.AdminRepository,
+	refreshTokenRepository repository.RefreshTokenRepository,
 ) *AuthService {
 	return &AuthService{
-		authConfig:         authConfig,
-		employeeRepository: employeeRepository,
-		adminRepository:    adminRepository,
+		authConfig:             authConfig,
+		employeeRepository:     employeeRepository,
+		adminRepository:        adminRepository,
+		refreshTokenRepository: refreshTokenRepository,
 	}
 }
 
-func (service *AuthService) EmployeeLogin(ctx context.Context, accessKey model.EmployeeAccessKey) (string, error) {
+func (service *AuthService) EmployeeLogin(ctx context.Context, accessKey model.EmployeeAccessKey) (string, string, error) {
 	employee, err := service.employeeRepository.GetByAccessKey(ctx, accessKey)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	accessToken, err := jwt.NewAccessToken(&jwt.AccessTokenClaims{
 		UserID:   employee.ID(),
 		UserType: model.UserTypeEmployee,
-	}, service.authConfig.JWTSecret(), service.authConfig.JWTExpireDuration())
-
+	}, service.authConfig.AccessTokenSecret(), service.authConfig.AccessTokenExpireDuration())
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return accessToken, nil
+	refreshTokenID, err := model.NewRefreshTokenID(uuid.New())
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshTokenExpiresAt, err := model.NewRefreshTokenExpiresAt(time.Now().Add(service.authConfig.RefreshTokenExpireDuration()))
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshTokenModel, err := model.NewRefreshToken(refreshTokenID, employee.ID(), refreshTokenExpiresAt)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := jwt.NewRefreshToken(&jwt.RefreshTokenClaims{
+		ID:       refreshTokenModel.ID(),
+		UserID:   refreshTokenModel.UserID(),
+		UserType: model.UserTypeEmployee,
+	}, service.authConfig.RefreshTokenSecret(), service.authConfig.RefreshTokenExpireDuration())
+	if err != nil {
+		return "", "", err
+	}
+
+	if err := service.refreshTokenRepository.Save(ctx, refreshTokenModel); err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
-func (service *AuthService) AdminLogin(ctx context.Context, login model.AdminLogin, password string) (string, error) {
+
+func (service *AuthService) AdminLogin(ctx context.Context, login model.AdminLogin, password string) (string, string, error) {
 	admin, err := service.adminRepository.GetByLogin(ctx, login)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if !admin.PasswordMathes(password) {
-		return "", errors.New("TODO")
+		return "", "", errors.New("TODO")
 	}
 
 	accessToken, err := jwt.NewAccessToken(&jwt.AccessTokenClaims{
 		UserID:   admin.ID(),
 		UserType: model.UserTypeAdmin,
-	}, service.authConfig.JWTSecret(), service.authConfig.JWTExpireDuration())
+	}, service.authConfig.AccessTokenSecret(), service.authConfig.AccessTokenExpireDuration())
 
 	if err != nil {
-		return "", err
+		// TODO: create domain error
+		return "", "", err
 	}
 
-	return accessToken, nil
+	refreshTokenID, err := model.NewRefreshTokenID(uuid.New())
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshTokenExpiresAt, err := model.NewRefreshTokenExpiresAt(time.Now().Add(service.authConfig.RefreshTokenExpireDuration()))
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshTokenModel, err := model.NewRefreshToken(refreshTokenID, admin.ID(), refreshTokenExpiresAt)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := jwt.NewRefreshToken(&jwt.RefreshTokenClaims{
+		ID:       refreshTokenModel.ID(),
+		UserID:   refreshTokenModel.UserID(),
+		UserType: model.UserTypeAdmin,
+	}, service.authConfig.RefreshTokenSecret(), service.authConfig.RefreshTokenExpireDuration())
+	if err != nil {
+		return "", "", err
+	}
+
+	if err := service.refreshTokenRepository.Save(ctx, refreshTokenModel); err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
+}
+
+func (service *AuthService) Refresh(ctx context.Context, oldRefreshToken string) (string, string, error) {
+	oldRefreshTokenClaims, err := jwt.ParseRefreshToken(oldRefreshToken, service.authConfig.RefreshTokenSecret())
+	if err != nil {
+		return "", "", err
+	}
+
+	oldRefreshTokenModel, err := service.refreshTokenRepository.GetByID(ctx, oldRefreshTokenClaims.ID)
+	if err != nil {
+		return "", "", err
+	}
+
+	accessToken, err := jwt.NewAccessToken(&jwt.AccessTokenClaims{
+		UserID:   oldRefreshTokenModel.UserID(),
+		UserType: oldRefreshTokenClaims.UserType,
+	}, service.authConfig.AccessTokenSecret(), service.authConfig.AccessTokenExpireDuration())
+	if err != nil {
+		return "", "", err
+	}
+
+	newRefreshToken, err := jwt.NewRefreshToken(&jwt.RefreshTokenClaims{
+		ID:       oldRefreshTokenModel.ID(),
+		UserID:   oldRefreshTokenModel.UserID(),
+		UserType: oldRefreshTokenClaims.UserType,
+	}, service.authConfig.RefreshTokenSecret(), service.authConfig.RefreshTokenExpireDuration())
+	if err != nil {
+		return "", "", err
+	}
+
+	newRefreshTokenID, err := model.NewRefreshTokenID(uuid.New())
+	if err != nil {
+		return "", "", err
+	}
+
+	newRefreshTokenExpiresAt, err := model.NewRefreshTokenExpiresAt(time.Now().Add(service.authConfig.RefreshTokenExpireDuration()))
+	if err != nil {
+		return "", "", err
+	}
+
+	newRefreshTokenModel, err := model.NewRefreshToken(
+		newRefreshTokenID,
+		oldRefreshTokenModel.UserID(),
+		newRefreshTokenExpiresAt,
+	)
+	if err != nil {
+		return "", "", err
+	}
+
+	// TODO: all of the repository operations must be within a transaction. introduce transaction manager
+	service.refreshTokenRepository.Save(ctx, newRefreshTokenModel)
+	service.refreshTokenRepository.Delete(ctx, oldRefreshTokenModel)
+
+	return accessToken, newRefreshToken, nil
 }

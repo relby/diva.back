@@ -13,13 +13,14 @@ func (server *GRPCServer) EmployeeLogin(ctx context.Context, req *genproto.Emplo
 		return nil, err
 	}
 
-	accessToken, err := server.authService.EmployeeLogin(ctx, accessKey)
+	accessToken, refreshToken, err := server.authService.EmployeeLogin(ctx, accessKey)
 	if err != nil {
 		return nil, err
 	}
 
 	return &genproto.EmployeeLoginResponse{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}, nil
 }
 
@@ -29,12 +30,25 @@ func (server *GRPCServer) AdminLogin(ctx context.Context, req *genproto.AdminLog
 		return nil, err
 	}
 
-	accessToken, err := server.authService.AdminLogin(ctx, login, req.Password)
+	accessToken, refreshToken, err := server.authService.AdminLogin(ctx, login, req.Password)
 	if err != nil {
 		return nil, err
 	}
 
 	return &genproto.AdminLoginResponse{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}
+
+func (server *GRPCServer) Refresh(ctx context.Context, req *genproto.RefreshRequest) (*genproto.RefreshResponse, error) {
+	accessToken, refreshToken, err := server.authService.Refresh(ctx, req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &genproto.RefreshResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}, nil
 }

@@ -6,40 +6,69 @@ import (
 	"time"
 )
 
-const jwtSecretName = "JWT_SECRET"
-const jwtExpireDurationName = "JWT_EXPIRE_DURATION"
+const accessTokenSecretName = "ACCESS_TOKEN_SECRET"
+const accessTokenExpireDurationName = "ACCESS_TOKEN_EXPIRE_DURATION"
+const refreshTokenSecretName = "REFRESH_TOKEN_SECRET"
+const refreshTokenExpireDurationName = "REFRESH_TOKEN_EXPIRE_DURATION"
 
 type AuthConfig struct {
-	jwtSecret         string
-	jwtExpireDuration time.Duration
+	accessTokenSecret          string
+	accessTokenExpireDuration  time.Duration
+	refreshTokenSecret         string
+	refreshTokenExpireDuration time.Duration
 }
 
 func NewAuthConfig() (*AuthConfig, error) {
-	jwtSecret := os.Getenv(jwtSecretName)
-	if jwtSecret == "" {
-		return nil, notFoundError(jwtSecretName)
+	accessTokenSecret := os.Getenv(accessTokenSecretName)
+	if accessTokenSecret == "" {
+		return nil, notFoundError(accessTokenSecretName)
 	}
 
-	jwtExpireDurationString := os.Getenv(jwtExpireDurationName)
-	if jwtExpireDurationString == "" {
-		return nil, notFoundError(jwtExpireDurationName)
+	accessTokenExpireDurationString := os.Getenv(accessTokenExpireDurationName)
+	if accessTokenExpireDurationString == "" {
+		return nil, notFoundError(accessTokenExpireDurationName)
 	}
 
-	jwtExpireDuration, err := time.ParseDuration(jwtExpireDurationString)
+	accessTokenExpireDuration, err := time.ParseDuration(accessTokenExpireDurationString)
 	if err != nil {
-		return nil, fmt.Errorf("`%s` has invalid format: %w", jwtExpireDurationName, err)
+		return nil, fmt.Errorf("`%s` has invalid format: %w", accessTokenExpireDurationName, err)
+	}
+
+	refreshTokenSecret := os.Getenv(refreshTokenSecretName)
+	if refreshTokenSecret == "" {
+		return nil, notFoundError(refreshTokenSecretName)
+	}
+
+	refreshTokenExpireDurationString := os.Getenv(refreshTokenExpireDurationName)
+	if refreshTokenExpireDurationString == "" {
+		return nil, notFoundError(refreshTokenExpireDurationName)
+	}
+
+	refreshTokenExpireDuration, err := time.ParseDuration(refreshTokenExpireDurationString)
+	if err != nil {
+		return nil, fmt.Errorf("`%s` has invalid format: %w", refreshTokenExpireDurationName, err)
 	}
 
 	return &AuthConfig{
-		jwtSecret:         jwtSecret,
-		jwtExpireDuration: jwtExpireDuration,
+		accessTokenSecret:          accessTokenSecret,
+		accessTokenExpireDuration:  accessTokenExpireDuration,
+		refreshTokenSecret:         refreshTokenSecret,
+		refreshTokenExpireDuration: refreshTokenExpireDuration,
 	}, nil
 }
 
-func (config *AuthConfig) JWTSecret() string {
-	return config.jwtSecret
+func (config *AuthConfig) AccessTokenSecret() string {
+	return config.accessTokenSecret
 }
 
-func (config *AuthConfig) JWTExpireDuration() time.Duration {
-	return config.jwtExpireDuration
+func (config *AuthConfig) AccessTokenExpireDuration() time.Duration {
+	return config.accessTokenExpireDuration
+}
+
+func (config *AuthConfig) RefreshTokenSecret() string {
+	return config.refreshTokenSecret
+}
+
+func (config *AuthConfig) RefreshTokenExpireDuration() time.Duration {
+	return config.refreshTokenExpireDuration
 }

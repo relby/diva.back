@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type EmployeePermission string
@@ -76,4 +77,10 @@ type Employee struct {
 type User struct {
 	ID       uuid.UUID
 	FullName string
+}
+
+type UserRefreshToken struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	ExpiresAt pgtype.Timestamptz
 }

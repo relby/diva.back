@@ -3,6 +3,8 @@ package config
 import "time"
 
 type AuthConfig interface {
-	JWTSecret() string
-	JWTExpireDuration() time.Duration
+	AccessTokenSecret() string
+	AccessTokenExpireDuration() time.Duration
+	RefreshTokenSecret() string
+	RefreshTokenExpireDuration() time.Duration
 }

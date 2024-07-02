@@ -24,13 +24,15 @@ type DIContainer struct {
 
 	queries *gensqlc.Queries
 
-	customerRepository repository.CustomerRepository
-	adminRepository    repository.AdminRepository
-	employeeRepository repository.EmployeeRepository
-	customerService    *service.CustomerService
-	employeeService    *service.EmployeeService
-	authService        *service.AuthService
-	grpcServer         *api.GRPCServer
+	customerRepository     repository.CustomerRepository
+	adminRepository        repository.AdminRepository
+	employeeRepository     repository.EmployeeRepository
+	refreshTokenRepository repository.RefreshTokenRepository
+
+	customerService *service.CustomerService
+	employeeService *service.EmployeeService
+	authService     *service.AuthService
+	grpcServer      *api.GRPCServer
 }
 
 func NewDIContainer() (*DIContainer, error) {
@@ -188,6 +190,19 @@ func (diContainer *DIContainer) EmployeeRepository(ctx context.Context) (reposit
 	return diContainer.employeeRepository, nil
 }
 
+func (diContainer *DIContainer) RefreshTokenRepository(ctx context.Context) (repository.RefreshTokenRepository, error) {
+	if diContainer.refreshTokenRepository == nil {
+		queries, err := diContainer.Queries(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		diContainer.refreshTokenRepository = postgres.NewRefreshTokenRepository(queries)
+	}
+
+	return diContainer.refreshTokenRepository, nil
+}
+
 func (diContainer *DIContainer) CustomerService(ctx context.Context) (*service.CustomerService, error) {
 	if diContainer.customerService == nil {
 		customerRepository, err := diContainer.CustomerRepository(ctx)
@@ -228,8 +243,12 @@ func (diContainer *DIContainer) AuthService(ctx context.Context) (*service.AuthS
 		if err != nil {
 			return nil, err
 		}
+		refreshTokenRepository, err := diContainer.RefreshTokenRepository(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-		diContainer.authService = service.NewAuthService(authConfig, employeeRepository, adminRepository)
+		diContainer.authService = service.NewAuthService(authConfig, employeeRepository, adminRepository, refreshTokenRepository)
 	}
 
 	return diContainer.authService, nil

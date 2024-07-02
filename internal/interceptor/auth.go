@@ -56,7 +56,7 @@ func (interceptor *AuthInterceptor) Unary(ctx context.Context, req interface{}, 
 
 	accessToken := fields[1]
 
-	claims, err := jwt.ParseAccessToken(accessToken, interceptor.authConfig.JWTSecret())
+	claims, err := jwt.ParseAccessToken(accessToken, interceptor.authConfig.AccessTokenSecret())
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
