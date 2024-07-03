@@ -174,16 +174,16 @@ func (service *AuthService) Refresh(ctx context.Context, oldRefreshToken string)
 		return "", "", err
 	}
 
-	newRefreshToken, err := jwt.NewRefreshToken(&jwt.RefreshTokenClaims{
-		ID:       oldRefreshTokenModel.ID(),
-		UserID:   oldRefreshTokenModel.UserID(),
-		UserType: oldRefreshTokenClaims.UserType,
-	}, service.authConfig.RefreshTokenSecret(), service.authConfig.RefreshTokenExpireDuration())
+	newRefreshTokenID, err := model.NewRefreshTokenID(uuid.New())
 	if err != nil {
 		return "", "", err
 	}
 
-	newRefreshTokenID, err := model.NewRefreshTokenID(uuid.New())
+	newRefreshToken, err := jwt.NewRefreshToken(&jwt.RefreshTokenClaims{
+		ID:       newRefreshTokenID,
+		UserID:   oldRefreshTokenModel.UserID(),
+		UserType: oldRefreshTokenClaims.UserType,
+	}, service.authConfig.RefreshTokenSecret(), service.authConfig.RefreshTokenExpireDuration())
 	if err != nil {
 		return "", "", err
 	}
