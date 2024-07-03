@@ -52,3 +52,11 @@ func (server *GRPCServer) Refresh(ctx context.Context, req *genproto.RefreshRequ
 		RefreshToken: refreshToken,
 	}, nil
 }
+
+func (server *GRPCServer) Logout(ctx context.Context, req *genproto.LogoutRequest) (*genproto.LogoutResponse, error) {
+	if err := server.authService.Logout(ctx, req.RefreshToken); err != nil {
+		return nil, err
+	}
+
+	return &genproto.LogoutResponse{}, nil
+}

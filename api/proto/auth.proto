@@ -32,8 +32,15 @@ message RefreshResponse {
     string refresh_token = 2;
 }
 
+message LogoutRequest {
+    string refresh_token = 1;
+}
+
+message LogoutResponse {}
+
 service AuthService {
     rpc AdminLogin(AdminLoginRequest) returns (AdminLoginResponse);
     rpc EmployeeLogin(EmployeeLoginRequest) returns (EmployeeLoginResponse);
     rpc Refresh(RefreshRequest) returns (RefreshResponse);
+    rpc Logout(LogoutRequest) returns (LogoutResponse);
 }

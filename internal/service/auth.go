@@ -203,8 +203,32 @@ func (service *AuthService) Refresh(ctx context.Context, oldRefreshToken string)
 	}
 
 	// TODO: all of the repository operations must be within a transaction. introduce transaction manager
-	service.refreshTokenRepository.Save(ctx, newRefreshTokenModel)
-	service.refreshTokenRepository.Delete(ctx, oldRefreshTokenModel)
+	if err := service.refreshTokenRepository.Save(ctx, newRefreshTokenModel); err != nil {
+		return "", "", err
+	}
+
+	if err := service.refreshTokenRepository.Delete(ctx, oldRefreshTokenModel); err != nil {
+		return "", "", err
+	}
 
 	return accessToken, newRefreshToken, nil
+}
+
+func (service *AuthService) Logout(ctx context.Context, refreshToken string) error {
+	refreshTokenClaims, err := jwt.ParseRefreshToken(refreshToken, service.authConfig.RefreshTokenSecret())
+	if err != nil {
+		return err
+	}
+
+	refreshTokenModel, err := service.refreshTokenRepository.GetByID(ctx, refreshTokenClaims.ID)
+	if err != nil {
+		return err
+	}
+
+	err = service.refreshTokenRepository.Delete(ctx, refreshTokenModel)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
