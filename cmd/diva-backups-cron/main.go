@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -18,15 +16,9 @@ import (
 var (
 	BACKUPS_DIR_PATH             = filepath.Join(".", "backups")
 	BACKUP_FILE_NAME_TIME_FORMAT = "20060102150405"
-	postgresContainerName        = flag.String("postgres-container", "", "")
 )
 
 func main() {
-	flag.Parse()
-	if *postgresContainerName == "" {
-		panic(errors.New("provide `postgres-container` flag"))
-	}
-
 	diContainer, err := app.NewDIContainer()
 	if err != nil {
 		panic(fmt.Errorf("failed to create DI container: %w", err))
@@ -43,7 +35,6 @@ func main() {
 		backupFileName := fmt.Sprintf("%s.sql", time.Now().Format(BACKUP_FILE_NAME_TIME_FORMAT))
 		backupFilePath := filepath.Join(BACKUPS_DIR_PATH, backupFileName)
 		cmd := exec.Command(
-			"docker", "exec", "-it", *postgresContainerName,
 			"pg_dump",
 			"-U", postgresConfig.User(),
 			"-h", postgresConfig.Host(),
