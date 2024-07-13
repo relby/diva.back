@@ -11,6 +11,7 @@ RUN go mod download
 COPY ./ ./
 
 RUN go build ./cmd/diva/
+RUN go build ./cmd/diva-backups-cron/
 RUN go build ./cmd/diva-create-admin/
 RUN go build ./cmd/diva-excel/
 
@@ -22,6 +23,7 @@ WORKDIR /app/
 
 COPY .env ./
 COPY --from=builder /app/diva ./
+COPY --from=builder /app/diva-backups-cron ./
 COPY --from=builder /app/diva-create-admin ./
 COPY --from=builder /app/diva-excel ./
 

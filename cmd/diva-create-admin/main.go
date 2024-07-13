@@ -19,13 +19,13 @@ var (
 func main() {
 	flag.Parse()
 	if *login == "" {
-		log.Fatalln("provide login flag")
+		log.Fatalln("provide `login` flag")
 	}
 	if *password == "" {
-		log.Fatalln("provide password flag")
+		log.Fatalln("provide `password` flag")
 	}
 	if *fullName == "" {
-		log.Fatalln("provide full name flag")
+		log.Fatalln("provide `full-name` flag")
 	}
 
 	adminLogin, err := model.NewAdminLogin(*login)
